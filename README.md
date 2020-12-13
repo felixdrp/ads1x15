@@ -50,5 +50,5 @@ Please, visit the examples folder where you can find some use cases for this mod
 
 ## Acknowledgment
 
-- @rpsoft for support.
+- @rpsoft [Jesus Rodriguez](https://github.com/rpsoft) for support.
 - @alphacharlie [Alpha Charlie](https://github.com/alphacharlie) for the repository [node-ads1x15](https://github.com/alphacharlie/node-ads1x15).
