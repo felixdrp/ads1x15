@@ -1,0 +1,33 @@
+{
+  "name": "ads1x15",
+  "description": "Ultra-Small, Low-Power, BitAnalog-to-Digital Converter with Internal Reference",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "dependencies": {
+    "i2c-bus": "^5.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "examples": "for file in ./examples/* ; do (node $file); done",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/felixdrp/ads1x15.git"
+  },
+  "keywords": [
+    "ads1x15",
+    "ads1015",
+    "ads1115",
+    "adc"
+  ],
+  "author": "felixdrp",
+  "license": "GPLV2",
+  "bugs": {
+    "url": "https://github.com/felixdrp/ads1x15/issues"
+  },
+  "homepage": "https://github.com/felixdrp/ads1x15#readme"
+}
