@@ -1,5 +1,6 @@
 # ads1x15
-Ultra-Small, Low-Power, BitAnalog-to-Digital Converter with Internal Reference.
+
+A javascript library for the DS101x Ultra-Small,Low-Power, I2C-Compatible, 3.3-kSPS, 12-Bit ADCs With Internal Reference, Oscillator and Programmable Comparator.
 
 ## Installation
 
@@ -9,6 +10,7 @@ npm install ads1x15
 
 ## Common Usage
 
+This example read all ports voltages.
 
 ```js
 const ads1x15 = require('ads1x15');
