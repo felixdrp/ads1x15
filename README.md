@@ -10,6 +10,9 @@ npm install ads1x15
 
 ## Common Usage
 
+Here's the Raspberry Pi wired to the ADS1015 with I2C:
+![Image of Raspberry Pi wired to the ADS1015](https://cdn-learn.adafruit.com/assets/assets/000/058/680/medium800/sensors_raspi_ads1015_i2c_bb.png?1533593501)
+
 This example read all ports voltages.
 
 ```js
