@@ -224,6 +224,10 @@ function ads1x15(ic = IC_ADS1015, address = 0x48, i2c_dev = '/dev/i2c-1') {
   this.busy = false;
 }
 
+ads1x15.prototype.setAddress = function(address) {
+  this.address = address || this.address
+}
+
 ads1x15.prototype.openBus = async function(i2cDev) {
   this.i2c = await i2c.openPromisified(i2cDev || this.i2cDev)
   return this.i2c;
