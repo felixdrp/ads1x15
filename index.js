@@ -288,76 +288,78 @@ ads1x15.prototype.i2cReadWord = async function(cmd) {
  * @param {number} Obj.channelNegative - used for differential reading
  * @param {number} Obj.pga=6144 - programmable gain amplifier. default 6144
  * @param {number} Obj.sps=250 - samples per second. default 250
+ * @param {number} Obj.delayFineTune=1 - adding delay miliseconds to read data. default 1
  * @returns measure in mili Volts mV
  */
- ads1x15.prototype.readSingleEnded = async function({
+ads1x15.prototype.readSingleEnded = async function({
    channel = 0,
    channelPositive,
    channelNegative,
    pga = 6144,
-   sps = 250
- }) {
-   const self = this;
+   sps = 250,
+   delayFineTune = 1,
+}) {
+  const self = this;
 
-   if (self.busy) {
-     return "ADC is busy...";
-   }
+  if (self.busy) {
+    return "ADC is busy...";
+  }
 
-   self.busy = true;
+  self.busy = true;
 
-   // Disable comparator, Non-latching, Alert/Rdy active low
-   // traditional comparator, single-shot mode
-   let config =
-       ADS1015_REG_CONFIG_CQUE_NONE |    // Disable the comparator (default val)
-       ADS1015_REG_CONFIG_CLAT_NONLAT |  // Non-latching (default val)
-       ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
-       ADS1015_REG_CONFIG_CMODE_TRAD |   // Traditional comparator (default val)
- //      ADS1015_REG_CONFIG_DR_1600SPS |   // 1600 samples per second (default)
-       ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
+  // Disable comparator, Non-latching, Alert/Rdy active low
+  // traditional comparator, single-shot mode
+  let config =
+      ADS1015_REG_CONFIG_CQUE_NONE |    // Disable the comparator (default val)
+      ADS1015_REG_CONFIG_CLAT_NONLAT |  // Non-latching (default val)
+      ADS1015_REG_CONFIG_CPOL_ACTVLOW | // Alert/Rdy active low   (default val)
+      ADS1015_REG_CONFIG_CMODE_TRAD |   // Traditional comparator (default val)
+//      ADS1015_REG_CONFIG_DR_1600SPS |   // 1600 samples per second (default)
+      ADS1015_REG_CONFIG_MODE_SINGLE;   // Single-shot mode (default)
 
-   try {
-     // Set sample per seconds, defaults to 250sps
-     // If sps is in the dictionary (defined in init) it returns the value of the constant
-     config |= spsConfigByChipType(self.ic, sps);
+  try {
+    // Set sample per seconds, defaults to 250sps
+    // If sps is in the dictionary (defined in init) it returns the value of the constant
+    config |= spsConfigByChipType(self.ic, sps);
 
-     // Set PGA/voltage range, defaults to +-6.144V
-     config |= pgaConfig(pga);
-     self.pga = pga;
+    // Set PGA/voltage range, defaults to +-6.144V
+    config |= pgaConfig(pga);
+    self.pga = pga;
 
-     // Configure channel
-     // if channel negative is set config as differential
-     if (channelNegative) {
-       // Set channels
-       config |= channelDifferentialConfig(channelPositive || channel, channelNegative);
-     } else {
-       // Set the channel to be converted
-       config |= channelConfig(channel);
-     }
+    // Configure channel
+    // if channel negative is set config as differential
+    if (channelNegative) {
+      // Set channels
+      config |= channelDifferentialConfig(channelPositive || channel, channelNegative);
+    } else {
+      // Set the channel to be converted
+      config |= channelConfig(channel);
+    }
 
-   } catch (error) {
-     self.busy = false;
-     throw (error);
-   }
+  } catch (error) {
+    self.busy = false;
+    throw (error);
+  }
 
-   // Set 'start single-conversion' bit
-   config |= ADS1015_REG_CONFIG_OS_SINGLE;
+  // Set 'start single-conversion' bit
+  config |= ADS1015_REG_CONFIG_OS_SINGLE;
 
-   // Write config register to the ADC
-   let result = await self.i2cWriteWord(ADS1015_REG_POINTER_CONFIG, config);
+  // Write config register to the ADC
+  let result = await self.i2cWriteWord(ADS1015_REG_POINTER_CONFIG, config);
 
-   // Wait for the ADC conversion to complete
-   // The minimum delay depends on the sps: delay >= 1s/sps
-   // We add 1ms to be sure
-   const delay = (1000 / sps) + 1;
-   await sleep(delay);
+  // Wait for the ADC conversion to complete
+  // The minimum delay depends on the sps: delay >= 1s/sps
+  // We add 1ms to be sure
+  const delay = (1000 / sps) + delayFineTune;
+  await sleep(delay);
 
-   let measure;
-   // Read the conversion results
-   measure = await self.i2cReadWord(ADS1015_REG_POINTER_CONVERT);
-   measure = self.formatResult(measure);
-   self.busy = false;
-   return measure;
- }
+  let measure;
+  // Read the conversion results
+  measure = await self.i2cReadWord(ADS1015_REG_POINTER_CONVERT);
+  measure = self.formatResult(measure);
+  self.busy = false;
+  return measure;
+}
 
 /**
  * @function readADCSingleEnded
@@ -460,6 +462,7 @@ ads1x15.prototype.readADCDifferential23 = function(pga, sps) {
  * @param {number} Obj.channelNegative - used for differential reading
  * @param {number} Obj.pga=6144 - programmable gain amplifier. default 6144
  * @param {number} Obj.sps=250 - samples per second. default 250
+ * @param {number} Obj.delayFineTune=1 - adding delay miliseconds to read data. default 1
  * @returns measure in mili Volts mV
  */
 
@@ -468,7 +471,8 @@ ads1x15.prototype.startContinuousConversion = async function({
   channelPositive,
   channelNegative,
   pga = 6144,
-  sps = 250
+  sps = 250,
+  delayFineTune = 1,
 }) {
   const self = this;
   if(self.busy) {
@@ -529,7 +533,7 @@ ads1x15.prototype.startContinuousConversion = async function({
   // Wait for the ADC conversion to complete
   // The minimum delay depends on the sps: delay >= 1s/sps
   // We add 1ms to be sure
-  const delay = (1000 / sps) + 1;
+  const delay = (1000 / sps) + delayFineTune;
   await sleep(delay);
 
   // :-) test this code result
@@ -594,108 +598,108 @@ ads1x15.prototype.getLastConversionResults = async function(_pga) {
  * @param {number} Obj.latching - true=Latch or false non latch
  * @param {number} Obj.numReadings - 1, 2, 4
  */
- ads1x15.prototype.startComparator = async function({
-   channel = 0,
-   channelPositive,
-   channelNegative,
-   thresholdHigh,
-   thresholdLow,
-   pga = 6144,
-   sps = 250,
-   activeLow = true,
-   traditionalMode = true,
-   latching = false,
-   numReadings = 1,
- }) {
-   self = this;
+ads1x15.prototype.startComparator = async function({
+  channel = 0,
+  channelPositive,
+  channelNegative,
+  thresholdHigh,
+  thresholdLow,
+  pga = 6144,
+  sps = 250,
+  activeLow = true,
+  traditionalMode = true,
+  latching = false,
+  numReadings = 1,
+}) {
+  self = this;
 
-   if(self.busy) {
-     return "ADC is busy..."
-   }
+  if(self.busy) {
+    return "ADC is busy..."
+  }
 
-   self.busy = true;
+  self.busy = true;
 
-   // Continuous mode
-   config = ADS1015_REG_CONFIG_MODE_CONTIN;
+  // Continuous mode
+  config = ADS1015_REG_CONFIG_MODE_CONTIN;
 
-   if (activeLow == true) {
-     config |= ADS1015_REG_CONFIG_CPOL_ACTVLOW;
-   } else {
-     config |= ADS1015_REG_CONFIG_CPOL_ACTVHI;
-   }
+  if (activeLow == true) {
+    config |= ADS1015_REG_CONFIG_CPOL_ACTVLOW;
+  } else {
+    config |= ADS1015_REG_CONFIG_CPOL_ACTVHI;
+  }
 
-   if (traditionalMode == true) {
-     config |= ADS1015_REG_CONFIG_CMODE_TRAD;
-   } else {
-     config |= ADS1015_REG_CONFIG_CMODE_WINDOW;
-   }
+  if (traditionalMode == true) {
+    config |= ADS1015_REG_CONFIG_CMODE_TRAD;
+  } else {
+    config |= ADS1015_REG_CONFIG_CMODE_WINDOW;
+  }
 
-   if (latching == true) {
-     config |= ADS1015_REG_CONFIG_CLAT_LATCH;
-   } else {
-     config |= ADS1015_REG_CONFIG_CLAT_NONLAT;
-   }
+  if (latching == true) {
+    config |= ADS1015_REG_CONFIG_CLAT_LATCH;
+  } else {
+    config |= ADS1015_REG_CONFIG_CLAT_NONLAT;
+  }
 
-   switch (numReadings) {
-   case 4:
-     config |= ADS1015_REG_CONFIG_CQUE_4CONV;
-     break;
-   case 2:
-     config |= ADS1015_REG_CONFIG_CQUE_2CONV;
-     break;
-   case 1:
-     config |= ADS1015_REG_CONFIG_CQUE_1CONV;
-   }
+  switch (numReadings) {
+  case 4:
+    config |= ADS1015_REG_CONFIG_CQUE_4CONV;
+    break;
+  case 2:
+    config |= ADS1015_REG_CONFIG_CQUE_2CONV;
+    break;
+  case 1:
+    config |= ADS1015_REG_CONFIG_CQUE_1CONV;
+  }
 
-   try {
-     // Set sample per seconds, defaults to 250sps
-     // If sps is in the dictionary (defined in init) it returns the value of the constant
-     config |= spsConfigByChipType(self.ic, sps);
+  try {
+    // Set sample per seconds, defaults to 250sps
+    // If sps is in the dictionary (defined in init) it returns the value of the constant
+    config |= spsConfigByChipType(self.ic, sps);
 
-     // Set PGA/voltage range, defaults to +-6.144V
-     config |= pgaConfig(pga);
-     self.pga = pga
+    // Set PGA/voltage range, defaults to +-6.144V
+    config |= pgaConfig(pga);
+    self.pga = pga
 
-     // Configure channel
-     // if channel negative is set config as differential
-     if (channelNegative) {
-       // Set channels
-       config |= channelDifferentialConfig(channelPositive || channel, channelNegative);
-     } else {
-       // Set the channel to be converted
-       config |= channelConfig(channel);
-     }
+    // Configure channel
+    // if channel negative is set config as differential
+    if (channelNegative) {
+      // Set channels
+      config |= channelDifferentialConfig(channelPositive || channel, channelNegative);
+    } else {
+      // Set the channel to be converted
+      config |= channelConfig(channel);
+    }
 
-   } catch (error) {
-     self.busy = false;
-     throw (error)
-   }
+  } catch (error) {
+    self.busy = false;
+    throw (error)
+  }
 
-   // Set 'start single-conversion' bit to begin conversions
-   config |= ADS1015_REG_CONFIG_OS_SINGLE;
+  // Set 'start single-conversion' bit to begin conversions
+  config |= ADS1015_REG_CONFIG_OS_SINGLE;
 
-   let result
-   // Write threshold high and low registers to the ADC
-   // V_digital = (2^(n-1)-1)/pga*V_analog
-   let thresholdHighWord = 0;
-   let thresholdLowWORD = 0;
+  let result
+  // Write threshold high and low registers to the ADC
+  // V_digital = (2^(n-1)-1)/pga*V_analog
+  let thresholdHighWord = 0;
+  let thresholdLowWORD = 0;
 
-   if (this.ic == IC_ADS1015) {
-     thresholdHighWORD = thresholdHigh * (2048.0 / pga);
-     thresholdLowWORD = thresholdLow * (2048.0 / pga );
-   } else {
-     thresholdHighWORD = thresholdHigh * (32767.0 / pga);
-     thresholdLowWORD = thresholdLow * (32767.0 / pga);
-   }
+  if (this.ic == IC_ADS1015) {
+    thresholdHighWORD = thresholdHigh * (2048.0 / pga);
+    thresholdLowWORD = thresholdLow * (2048.0 / pga );
+  } else {
+    thresholdHighWORD = thresholdHigh * (32767.0 / pga);
+    thresholdLowWORD = thresholdLow * (32767.0 / pga);
+  }
 
-   result = await self.i2cWriteWord(ADS1015_REG_POINTER_HITHRESH, thresholdHighWORD)
-   result = await self.i2cWriteWord(ADS1015_REG_POINTER_LOWTHRESH, thresholdLowWORD)
+  result = await self.i2cWriteWord(ADS1015_REG_POINTER_HITHRESH, thresholdHighWORD)
+  result = await self.i2cWriteWord(ADS1015_REG_POINTER_LOWTHRESH, thresholdLowWORD)
 
-   // Write config register to the ADC
-   // Once we write the ADC will convert continously and alert when things happen,
-   // we can read the converted values using getLastConversionResult
-   result = await self.i2cWriteWord(ADS1015_REG_POINTER_CONFIG, config)
- }
+  // Write config register to the ADC
+  // Once we write the ADC will convert continously and alert when things happen,
+  // we can read the converted values using getLastConversionResult
+  result = await self.i2cWriteWord(ADS1015_REG_POINTER_CONFIG, config)
+}
 
 /**
  * @function startSingleEndedComparator
