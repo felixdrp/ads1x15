@@ -7,6 +7,15 @@ A javascript library for the DS101x Ultra-Small,Low-Power, I2C-Compatible, 3.3-k
 ```sh
 npm install ads1x15
 ```
+Import options:
+
+```js
+import {default as ads1x15} from 'ads1x15';
+```
+
+```js
+const ads1x15 = require('ads1x15');
+```
 
 ## Common Usage
 
