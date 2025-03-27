@@ -288,7 +288,7 @@ ads1x15.prototype.i2cReadWord = async function(cmd) {
  * @param {number} Obj.channelNegative - used for differential reading
  * @param {number} Obj.pga=6144 - programmable gain amplifier. default 6144
  * @param {number} Obj.sps=250 - samples per second. default 250
- * @param {number} Obj.delayFineTune=1 - adding delay miliseconds to read data. default 1
+ * @param {number} Obj.delayFineTune=2 - A delay in milliseconds is added to allow the ADC time to take a measurement before data is read. Default 2
  * @returns measure in mili Volts mV
  */
 ads1x15.prototype.readSingleEnded = async function({
@@ -297,7 +297,7 @@ ads1x15.prototype.readSingleEnded = async function({
    channelNegative,
    pga = 6144,
    sps = 250,
-   delayFineTune = 1,
+   delayFineTune = 2,
 }) {
   const self = this;
 
@@ -462,17 +462,16 @@ ads1x15.prototype.readADCDifferential23 = function(pga, sps) {
  * @param {number} Obj.channelNegative - used for differential reading
  * @param {number} Obj.pga=6144 - programmable gain amplifier. default 6144
  * @param {number} Obj.sps=250 - samples per second. default 250
- * @param {number} Obj.delayFineTune=1 - adding delay miliseconds to read data. default 1
+ * @param {number} Obj.delayFineTune=2 - A delay in milliseconds is added to allow the ADC time to take a measurement before data is read. Default 2
  * @returns measure in mili Volts mV
  */
-
 ads1x15.prototype.startContinuousConversion = async function({
   channel = 0,
   channelPositive,
   channelNegative,
   pga = 6144,
   sps = 250,
-  delayFineTune = 1,
+  delayFineTune = 2,
 }) {
   const self = this;
   if(self.busy) {
